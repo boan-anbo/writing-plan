@@ -2,7 +2,7 @@ import { WritingInfo } from './doc-info';
 import { isCloseMarker, isOpenMarker } from './entities/is-open-marker';
 import { WritingPlanOptions } from './entities/writing-plan-options';
 import { Section } from './section';
-import { generateSectionsFromText} from './section-tree';
+import { generateSectionsFromText } from './section-tree';
 
 export class WritingPlan {
   readonly options: WritingPlanOptions;
@@ -93,13 +93,6 @@ export class WritingPlan {
     return this.sections.find(nextSection => nextSection.order === currentSection.order + 1) ?? null;
   }
 
-  getNextSiblingSection(currentSectionId: string): Section | null {
-    const currentSection = this.getSectionById(currentSectionId);
-    if (!currentSection) {
-      return null;
-    }
-    return this.sections.find(nextSection => nextSection.order > currentSection.order && nextSection.parentId === currentSection.parentId) ?? null;
-  }
 
   getNextChildSection(currentSectionId: string): Section | null {
     const currentSection = this.getSectionById(currentSectionId);
@@ -109,12 +102,27 @@ export class WritingPlan {
     return this.sections.find(nextSection => nextSection.order > currentSection.order && nextSection.parentId === currentSection.id) ?? null;
   }
 
+
+  getNextSiblingSection(currentSectionId: string): Section | null {
+    const currentSection = this.getSectionById(currentSectionId);
+    if (!currentSection) {
+      return null;
+    }
+    return this.sections.find(nextSiblingSection =>
+      nextSiblingSection.order === currentSection.order + 1
+      &&
+      nextSiblingSection.parentId === currentSection.parentId) ?? null;
+  }
+
   getPreviousSiblingSection(currentSectionId: string): Section | null {
     const currentSection = this.getSectionById(currentSectionId);
     if (!currentSection) {
       return null;
     }
-    return this.sections.find(section => section.order < currentSection.order && section.parentId === section.parentId) ?? null;
+    return this.sections.find(previousSiblingSection =>
+      (previousSiblingSection.order === currentSection.order - 1) // the previous sibling must be order minus 1. If I put order < current order, then it will be the first child of the parent section, not necessarily the immediate previous sibling
+      &&
+      previousSiblingSection.parentId === currentSection.parentId) ?? null;
   }
 
   getSectionByOrder(order: number): Section | null {
@@ -152,7 +160,7 @@ export class WritingPlan {
   }
 
   getMarkerRegex(): RegExp {
-    return this.options.getMarkerRegex()
+    return this.options.getMarkerRegex();
   }
 
 

@@ -60,4 +60,20 @@ it('should navigate by current section', () => {
   const sectionByCursor = plan.getSectionByLineAndIndex(1, 5);
   expect(sectionByCursor.marker).toBe('<100>');
 
+
+});
+
+it('should find immediate previous and next siblings correctly', () => {
+
+  const difficultText = `<1000> 1000 <500> 500 <100> 100 </> <50> 50 </> <25> 25 </> </> <400> 400 </> <300> 300 </> <200> </> <100> </> <20> </> <50> </> </> `;
+
+  const difficultPlan = new WritingPlan(difficultText);
+
+  const section25 = difficultPlan.getSectionByOrder(4);
+  expect(section25.marker).toBe('<25>');
+  expect(difficultPlan.getPreviousSiblingSection(section25.id).marker).toBe('<50>');
+
+  const section50 = difficultPlan.getSectionByOrder(3);
+  expect(section50.marker).toBe('<50>');
+  expect(difficultPlan.getNextSiblingSection(section50.id).marker).toBe('<25>');
 });
