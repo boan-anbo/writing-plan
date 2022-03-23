@@ -35,6 +35,7 @@ export class Section {
   estimatedTimeToComplete: number = 0;
   parentId: string | null = null;
   order: number;
+  levelOrder: number;
 
   constructor(section: Partial<Section>, options: WritingPlanOptions) {
     if (!section.marker || !options.getMarkerRegex().test(section.marker)) {

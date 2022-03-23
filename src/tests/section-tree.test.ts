@@ -89,3 +89,18 @@ it('should throw and point to the correct unclosed marker', () => {
     }
   }
 })
+
+it('should generate correct level order', () => {
+  const text = `<1000><100><50></></><200></><300></></>`;
+
+  const plan = new WritingPlan(text, new WritingPlanOptions());
+  const section200 = plan.sections[3];
+  expect(section200.marker).toBe('<200>');
+  expect(section200.order).toBe(3)
+  expect(section200.level).toBe(1)
+  expect(section200.levelOrder).toBe(1)
+
+  const section300 = plan.sections[4];
+  expect(section300.marker).toBe('<300>');
+  expect(section300.levelOrder).toBe(2)
+})

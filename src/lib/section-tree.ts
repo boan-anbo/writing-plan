@@ -199,6 +199,11 @@ export const generateSectionFromToken = (
     );
   }
 
+  // populate marker order
+  sections.forEach((section) => {
+    section.levelOrder = sections.filter((s) => s.level === section.level).sort((a, b) => a.order - b.order).indexOf(section);
+  });
+
   // return sections sort by order property
   return sections.sort((a, b) => a.order - b.order);
 };
