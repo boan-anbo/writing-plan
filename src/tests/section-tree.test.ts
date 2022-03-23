@@ -1,5 +1,7 @@
-import {WritingPlanOptions} from "../lib/entities/writing-plan-options";
-import {extractMarkerTokens, generateSectionsFromText} from "../lib/section-tree";
+import { SectionTreeParseError } from "../lib/entities/section-tree-parse-error";
+import { WritingPlanOptions } from "../lib/entities/writing-plan-options";
+import { extractMarkerTokens, generateSectionsFromText } from "../lib/section-tree";
+import WritingPlan from "../lib/writing-plan";
 
 
 it('extract sections one level at a time', () => {
@@ -68,4 +70,22 @@ it('should calculate estimated complete time', () => {
     currentWritingSpeed: 100,
   }))
   expect(sections[0].estimatedTimeToComplete).toBe(10)
+})
+
+// currently there is no way to know which open marker misses a close marker because that's the nature of the open & close tag systems. For example, if you open two tags and provide only one close tag, it will still be arbitrary to decide which one the close tag points to. The close tag, of course, could use matching description but that only lessen and not solve the problem because the two open tag could very well be the same tag. So the best I can do now is to point to the last unclosed tag, that at least can point to the correct root tag, not the very first root tag.
+it('should throw and point to the correct unclosed marker', () => {
+  const text = `<1000></> <2000><500><300> </> </>`;
+  // expect to throw
+
+  expect(
+    () =>  new WritingPlan(text, new WritingPlanOptions())
+  ).toThrowError(SectionTreeParseError);
+
+  try {
+    new WritingPlan(text, new WritingPlanOptions())
+  } catch (e: any) {
+    if (e instanceof SectionTreeParseError) {
+      expect(e.errorMarker).toBe('<2000>')
+    }
+  }
 })
