@@ -108,10 +108,10 @@ export class WritingPlan {
     if (!currentSection) {
       return null;
     }
-    return this.sections.find(nextSiblingSection =>
-      nextSiblingSection.order === currentSection.order + 1
+    return this.sections.filter(nextSiblingSection =>
+      nextSiblingSection.order > currentSection.order
       &&
-      nextSiblingSection.parentId === currentSection.parentId) ?? null;
+      nextSiblingSection.parentId === currentSection.parentId).shift() ?? null;
   }
 
   getPreviousSiblingSection(currentSectionId: string): Section | null {
@@ -119,10 +119,10 @@ export class WritingPlan {
     if (!currentSection) {
       return null;
     }
-    return this.sections.find(previousSiblingSection =>
-      (previousSiblingSection.order === currentSection.order - 1) // the previous sibling must be order minus 1. If I put order < current order, then it will be the first child of the parent section, not necessarily the immediate previous sibling
+    return this.sections.filter(previousSiblingSection =>
+      (previousSiblingSection.order < currentSection.order) // If I put order < current order, then it will be the first child of the parent section, not necessarily the immediate previous sibling. So I need to filter all its previous siblings and use the last one.
       &&
-      previousSiblingSection.parentId === currentSection.parentId) ?? null;
+      previousSiblingSection.parentId === currentSection.parentId).pop() ?? null
   }
 
   getSectionByOrder(order: number): Section | null {

@@ -108,3 +108,27 @@ it(`parent should not contain child's content`, () => {
   expect(plan.sections[6].content).toBe('200')
   expect(plan.sections[plan.sections.length - 1].content).toBe('50')
 })
+
+it('sections should have correct end index', () => {
+  const text = '<1000>12345</><200></>';
+  const closeEndChar = text.charAt(13);
+  const closeBegingChar = text.charAt(11);
+  expect(closeEndChar).toBe('>')
+  expect(closeBegingChar).toBe('<')
+  const result = new WritingPlan(text);
+
+  expect(result.sections[0].markerOpenEndIndex).toBe(5)
+  expect(result.sections[0].markerCloseIndex).toBe(11)
+  expect(result.sections[0].markerCloseEndIndex).toBe(13)
+})
+
+it('sections should have start and end positions', () => {
+  const text = '<1000>Study</><200></>';
+  const result = new WritingPlan(text);
+  const indexChar = text.charAt(13);
+  expect(indexChar).toBe('>');
+  expect(result
+    .getFirstSection().sectionEndPosition.index)
+    .toEqual(13);
+
+})

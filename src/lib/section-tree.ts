@@ -1,11 +1,11 @@
 import { isCloseMarker, isOpenMarker } from './entities/is-open-marker';
 import { SectionTreeParseError } from './entities/section-tree-parse-error';
 import { WritingPlanOptions } from './entities/writing-plan-options';
+import { Line } from './line';
 import { MarkerMatch } from './marker-match';
 import { getLinesFromText } from './reader';
 import { Section } from './section';
 import { extractSectionContent } from './utils/extract-section-content';
-import { Line } from './line';
 
 
 export const extractMarkerTokens = (
@@ -21,7 +21,7 @@ export const extractMarkerTokens = (
         const marker = m[0];
         const lineNumber = line.lineNumber;
         const markerStartIndex = m.index;
-        const markerEndIndex = markerStartIndex + marker.length;
+        const markerEndIndex = (markerStartIndex + marker.length) - 1; // eg. < is 10, < in </> should be 12, not 10 + length (3).
         markers.push({
           marker,
           markerOpenLine: lineNumber,
@@ -228,3 +228,4 @@ export const generateSectionFromToken = (
   // return sections sort by order property
   return sections.sort((a, b) => a.order - b.order);
 };
+

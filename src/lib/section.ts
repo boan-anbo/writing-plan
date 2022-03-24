@@ -15,10 +15,12 @@ export class Section {
   sectionEndPosition: Position;
   markerOpenLine: number = 0;
   markerOpenIndex: number = 0;
+  markerOpenEndIndex: number = 0;
   markerOpenLength: number = 0;
   markerCloseLine: number = 0;
   markerCloseIndex: number = 0;
   markerCloseLength: number = 0;
+  markerCloseEndIndex: number = 0;
   title: string | null = null;
   content: string = '';
   // the word target set specifically and manually for the marker, not the caculated one;
@@ -84,6 +86,7 @@ export class Section {
           marker: markerMatch.marker,
           markerOpenLine: markerMatch.markerOpenLine,
           markerOpenIndex: markerMatch.markerStartIndex,
+          markerOpenEndIndex: markerMatch.markerStartIndex + markerMatch.marker.length - 1,
           markerOpenLength: markerMatch.markerLength
         },
         options
@@ -113,11 +116,12 @@ export class Section {
       this.markerCloseLine = marker.markerOpenLine;
       this.markerCloseIndex = marker.markerStartIndex;
       this.markerCloseLength = marker.markerLength;
+      this.markerCloseEndIndex = marker.markerEndIndex;
 
       // add position
       this.sectionStartPosition = new Position(this.markerOpenLine, this.markerOpenIndex);
 
-      this.sectionEndPosition = new Position(this.markerCloseLine, this.markerCloseIndex + this.markerCloseLength);
+      this.sectionEndPosition = new Position(this.markerCloseLine, this.markerCloseEndIndex);
       this.content = '';
       // count words
 
