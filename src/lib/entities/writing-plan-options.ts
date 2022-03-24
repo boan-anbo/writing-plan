@@ -22,4 +22,5 @@ export class WritingPlanOptions {
     const regex = new RegExp(`${this.markerBegin}(.*?)${this.markerEnd}`, "g");
     return regex;
   }
+
 }

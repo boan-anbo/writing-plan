@@ -2,7 +2,6 @@ import { v4 } from 'uuid';
 
 import { Position } from './entities/Position';
 import { WritingPlanOptions } from './entities/writing-plan-options';
-import { Line } from './line';
 import { MarkerMatch } from './marker-match';
 import { countWords } from './word-count';
 
@@ -11,6 +10,9 @@ export class Section {
   id: string = v4();
   level: number = 0;
   marker: string = '';
+  options: WritingPlanOptions = new WritingPlanOptions();
+  sectionStartPosition: Position;
+  sectionEndPosition: Position;
   markerOpenLine: number = 0;
   markerOpenIndex: number = 0;
   markerOpenLength: number = 0;
@@ -42,6 +44,9 @@ export class Section {
       throw new Error(`Invalid marker: ${section.marker}`);
     }
 
+    // set options
+    this.options = options;
+
     Object.assign(this, section);
 
     // extract by marker
@@ -66,6 +71,7 @@ export class Section {
         this.title = title;
       }
     }
+
   }
 
   static fromMarkerMatch(
@@ -102,34 +108,18 @@ export class Section {
 
   closeSection(
     marker: MarkerMatch,
-    linesInBetween: Line[],
-    options: WritingPlanOptions
   ): Section {
     if (marker.isCloseMarker) {
       this.markerCloseLine = marker.markerOpenLine;
       this.markerCloseIndex = marker.markerStartIndex;
       this.markerCloseLength = marker.markerLength;
 
-      // get content between markers
-      const content = linesInBetween.map((line) => line.content).join('\n');
-      // remove content before the marker begins
-      const contentAfterMarker = content.substring(
-        this.markerOpenIndex + this.markerOpenLength
-      );
-      // remove all markers from content
-      this.content = contentAfterMarker.replace(options.getMarkerRegex(), '');
+      // add position
+      this.sectionStartPosition = new Position(this.markerOpenLine, this.markerOpenIndex);
+
+      this.sectionEndPosition = new Position(this.markerCloseLine, this.markerCloseIndex + this.markerCloseLength);
+      this.content = '';
       // count words
-      this.wordCount = countWords(this.content);
-      // calculate word balance
-      this.wordBalance = this.wordCount - this.wordTarget;
-      // calculate whether completed
-      this.completed = this.wordBalance >= 0;
-      // if current writing speed is provided calculate ETA in minutes
-      if (!this.completed && options.currentWritingSpeed > 0) {
-        this.estimatedTimeToComplete = Math.round(
-          Math.abs(this.wordBalance) / options.currentWritingSpeed
-        );
-      }
 
       return this;
     }
@@ -156,5 +146,21 @@ export class Section {
     );
   }
 
+  updateWordStat() {
+
+    this.wordCount = countWords(this.content);
+    // calculate word balance
+    this.wordBalance = this.wordCount - this.wordTarget;
+    // calculate whether completed
+    this.completed = this.wordBalance >= 0;
+    // if current writing speed is provided calculate ETA in minutes
+    if (!this.completed && this.options.currentWritingSpeed > 0) {
+      this.estimatedTimeToComplete = Math.round(
+        Math.abs(this.wordBalance) / this.options.currentWritingSpeed
+      );
+    }
+  }
 
 }
+
+

@@ -159,6 +159,10 @@ export class WritingPlan {
     return lastSection ?? null;
   }
 
+  getRootSections (): Section[] {
+    return this.sections.filter(section => section.parentId === null);
+  }
+
   getMarkerRegex(): RegExp {
     return this.options.getMarkerRegex();
   }

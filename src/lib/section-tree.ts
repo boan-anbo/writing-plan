@@ -1,19 +1,19 @@
 import { isCloseMarker, isOpenMarker } from './entities/is-open-marker';
 import { SectionTreeParseError } from './entities/section-tree-parse-error';
 import { WritingPlanOptions } from './entities/writing-plan-options';
-import { Line } from './line';
 import { MarkerMatch } from './marker-match';
 import { getLinesFromText } from './reader';
 import { Section } from './section';
+import { extractSectionContent } from './utils/extract-section-content';
+import { Line } from './line';
 
 
 export const extractMarkerTokens = (
-  text: string,
+  lines: Line[],
   options: WritingPlanOptions
 ): MarkerMatch[] => {
   const markers: MarkerMatch[] = [];
   const regex = options.getMarkerRegex();
-  const lines = getLinesFromText(text);
   lines.forEach((line) => {
     const match = line.content.matchAll(regex);
     if (match) {
@@ -29,7 +29,7 @@ export const extractMarkerTokens = (
           markerEndIndex,
           isOpenMarker: isOpenMarker(marker, options),
           isCloseMarker: isCloseMarker(marker, options),
-          markerLength: marker.length,
+          markerLength: marker.length
         });
       }
     }
@@ -42,21 +42,49 @@ export const generateSectionsFromText = (
   options: WritingPlanOptions
 ): Section[] => {
   const lines = getLinesFromText(text);
-  const tokens = extractMarkerTokens(text, options);
-  const sections = generateSectionFromToken(lines, tokens, options);
-  return populateSectionWordTargets(sections);
+  const tokens = extractMarkerTokens(lines, options);
+  const sections = generateSectionFromToken(tokens, options);
+  const sectionsWithContent = populatSectionsWithContent(lines, sections, options);
+  const sectionsWithWordTargetsCalculated = populateSectionWordTargets(sectionsWithContent);
+  return sectionsWithWordTargetsCalculated
+    // update word states
+    .map((section) => {
+    section.updateWordStat();
+    return section;
+  });
+
 };
 
+export const populatSectionsWithContent = (allLines: Line[], sections: Section[], options: WritingPlanOptions): Section[] => {
+  sections.forEach((section) => {
+    // extract content from lines and store it to section entity
+    section.content = extractSectionContent(
+      section,
+      getSectionLines(allLines, section),
+      sections.filter((s) => s.parentId === section.id),
+      options
+    );
+
+  });
+  return sections;
+};
+
+// get lines by section's starting and end positions, not necessarily exlusively, meaning there might be other content before and after the section in the opening and ending lines.
+const getSectionLines = (allLines: Line[], section: Section): Line[] => {
+  return allLines.slice(section.sectionStartPosition.line, section.sectionEndPosition.line + 1);
+};
+
+
 export const populateSectionWordTargets = (
-  sections: Section[],
+  sections: Section[]
 ): Section[] => {
   const rootSections = sections.filter((s) => s.level === 0);
   if (!rootSections.every((s) => s.wordTarget)) {
-    throw new SectionTreeParseError("Root sections must have word targets");
+    throw new SectionTreeParseError('Root sections must have word targets');
   }
   // make sure all children of root sections have word targets
   for (const rootSection of rootSections) {
-    sections = populatSectionBySectionRoot(rootSection, sections);
+    sections = populateWordTargetDivision(rootSection, sections);
   }
 
   let tryCount = 0;
@@ -65,11 +93,11 @@ export const populateSectionWordTargets = (
     const parentSection = sections.find(
       (s) => s.id === unsetSection.parentId && s.wordTarget
     );
-    sections = populatSectionBySectionRoot(parentSection, sections);
+    sections = populateWordTargetDivision(parentSection, sections);
 
     if (tryCount > 100) {
       throw SectionTreeParseError.fromSection(
-        "Could not populate all sections with word targets, perhaps due to unclosed or unassigned root sections",
+        'Could not populate all sections with word targets, perhaps due to unclosed or unassigned root sections',
         sections.find((s) => !s.wordTarget)
       );
     }
@@ -79,9 +107,9 @@ export const populateSectionWordTargets = (
   return sections;
 };
 
-export const populatSectionBySectionRoot = (
+export const populateWordTargetDivision = (
   rootSection: Section,
-  sections: Section[],
+  sections: Section[]
 ): Section[] => {
   // if root section has no target, then return the sections as is.
   if (!rootSection.wordTarget) {
@@ -122,7 +150,6 @@ export const populatSectionBySectionRoot = (
 };
 
 export const generateSectionFromToken = (
-  lines: Line[],
   markerTokens: MarkerMatch[],
   options: WritingPlanOptions
 ): Section[] => {
@@ -162,18 +189,12 @@ export const generateSectionFromToken = (
       const openedSection = openedSectionStack.pop();
       if (!openedSection) {
         throw SectionTreeParseError.fromMarker(
-          "Closing tag with not matching open tag",
+          'Closing tag with not matching open tag',
           currentMarker
         );
       }
-      const linesInSection = lines.slice(
-        openedSection.markerOpenLine,
-        currentMarker.markerOpenLine + 1
-      );
       const completedSection = openedSection.closeSection(
         currentMarker,
-        linesInSection,
-        options
       );
       sections.push(completedSection);
     }

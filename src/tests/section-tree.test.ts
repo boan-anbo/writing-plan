@@ -2,23 +2,15 @@ import { SectionTreeParseError } from "../lib/entities/section-tree-parse-error"
 import { WritingPlanOptions } from "../lib/entities/writing-plan-options";
 import { extractMarkerTokens, generateSectionsFromText } from "../lib/section-tree";
 import WritingPlan from "../lib/writing-plan";
+import { getLinesFromText } from '../lib/reader';
 
 
-it('extract sections one level at a time', () => {
-  // const options = new WritingPlanOptions();
-  // const contentInTheMiddle = '1000 Words Content\n<300>\n300 Words Content\n</>'
-  // const text = `<1000>\n${contentInTheMiddle}\n</>`
-  // const lines = getLinesFromText(text, options )
-  // const section = getOneLevelSections(lines, options)
-  // expect(section.content).toBe(contentInTheMiddle)
-  // expect(sectionInMiddle[0].content).toBe('1000 Words Content')
-  // expect(sectionInMiddle[3].content).toBe('</')
 
-})
 
 it('should extract all marker tokens', function () {
   const text = '<1000>1000Content<300>\n300Content</>\n<200>\n</>\n</>\n<400>400Content</>'
-  const tokens = extractMarkerTokens(text, new WritingPlanOptions())
+  const lines = getLinesFromText(text);
+  const tokens = extractMarkerTokens(lines, new WritingPlanOptions())
   expect(tokens.length).toBe(8)
 
 });
@@ -103,4 +95,16 @@ it('should generate correct level order', () => {
   const section300 = plan.sections[4];
   expect(section300.marker).toBe('<300>');
   expect(section300.levelOrder).toBe(2)
+})
+
+it(`parent should not contain child's content`, () => {
+  const text = `<1000>1000BEGIN<100>100</>1000MID<200>200<50>50<1000>1000BEGIN<100>100</>1000MID<200>200<50>50</></>1000END</></></>1000END</>`
+  const plan = new WritingPlan(text, new WritingPlanOptions());
+  expect(plan.sections[0].content).toBe('1000BEGIN1000MID1000END')
+  expect(plan.sections[1].content).toBe('100')
+  expect(plan.sections[2].content).toBe('200')
+  expect(plan.sections[3].content).toBe('50')
+
+  expect(plan.sections[6].content).toBe('200')
+  expect(plan.sections[plan.sections.length - 1].content).toBe('50')
 })
