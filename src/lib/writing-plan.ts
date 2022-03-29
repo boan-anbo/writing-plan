@@ -84,7 +84,7 @@ export class WritingPlan {
       return 0;
     });
 
-    return sortedAllMarkers.map(marker => marker.marker).join('\n');
+    return sortedAllMarkers.map(marker => marker.marker).join('\n\n');
 
   }
 
