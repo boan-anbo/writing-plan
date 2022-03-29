@@ -77,3 +77,68 @@ it('should find immediate previous and next siblings correctly', () => {
   expect(section50.marker).toBe('<50>');
   expect(difficultPlan.getNextSiblingSection(section50.id).marker).toBe('<25>');
 });
+
+it('parent sections should correctly include all child section word counts', () => {
+  const text = "<1000>\n" +
+    "Two words\n" +
+    "<>\n" +
+    "Two Word.\n" +
+    "Four word.\n" +
+    "Six word.\n" +
+    "</>\n" +
+    "<>\n" +
+    "Two Word.\n" +
+    "Four word.\n" +
+    "Six word.\n" +
+    "Eight word.\n" +
+    "</>\n" +
+    "</>"
+
+  const plan = new WritingPlan(text);
+  expect(plan.totalWords).toBe(16);
+  expect(plan.sections[0].wordCount).toBe(16);
+  expect(plan.sections[0].wordCountSelf).toBe(2);
+  expect(plan.sections[0].wordCountChildren).toBe(14);
+  expect(plan.sections[1].wordCountSelf).toBe(6);
+  expect(plan.sections[2].wordCountSelf).toBe(8);
+})
+
+it('should count section own wordcount correctly', () =>{
+const newText =  "<1000>\n" +
+  "One Two\n" +
+  "<>\n" +
+  "Three four\n" +
+  "</>\n" +
+  "</>\n"
+
+  const plan = new WritingPlan(newText);
+  expect(plan.totalWords).toBe(4);
+  expect(plan.sections[0].wordCountSelf).toBe(2);
+  expect(plan.sections[1].wordCountSelf).toBe(2);
+})
+
+
+it('should reconstruct the basic structure of the text with only the markers', () => {
+  const plan = new WritingPlan('<1000>One</><1000>Two<2000>Three</></>');
+  const skeleton = plan.getSkeletonPlan();
+  expect(skeleton).toBe('<1000>\n</>\n<1000>\n<2000>\n</>\n</>');
+
+  const plan2 = new WritingPlan("<1000>\n" +
+    "Two words\n" +
+    "<>\n" +
+    "Two Word.\n" +
+    "Four word.\n" +
+    "Six word.\n" +
+    "</>\n" +
+    "<>\n" +
+    "Two Word.\n" +
+    "Four word.\n" +
+    "Six word.\n" +
+    "Eight word.\n" +
+    "</>\n" +
+    "</>");
+
+  const skeleton2 = plan2.getSkeletonPlan();
+  expect(skeleton2).toBe('<1000>\n<>\n</>\n<>\n</>\n</>');
+
+})

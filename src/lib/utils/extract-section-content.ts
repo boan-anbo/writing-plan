@@ -19,9 +19,9 @@ export const extractSectionContent = (section: Section, lines: Line[], childrenS
           isInChildrenSection = true;
         } else if (
           line.lineNumber === childSection.markerOpenLine) {
-          const contentBeforeChildSectionBegins = line.content.substring(lastCheckedIndex, childSection.markerOpenIndex);
+          const contentBeforeChildSectionBegins = line.content.substring(lastCheckedIndex, childSection.markerOpenStartIndex);
           content += contentBeforeChildSectionBegins;
-          lastCheckedIndex = childSection.sectionEndPosition.index;
+          lastCheckedIndex = childSection.sectionEndPosition.index + 1;
           // set the marker to say this line is also in the children section
           isInChildrenSection = true;
         }
@@ -31,22 +31,32 @@ export const extractSectionContent = (section: Section, lines: Line[], childrenS
       if (!isInChildrenSection) {
         // sometimes a line has no children but is itself a children. In these cases, it needs to be determined if only the content within the tag is captured.
         if (line.lineNumber === section.sectionStartPosition.line) {
-          content += line.content.substring(section.sectionStartPosition.index, section.sectionEndPosition.line === line.lineNumber ? section.sectionEndPosition.index : line.content.length);
+          content += line.content.substring(section.sectionStartPosition.index, section.sectionEndPosition.line === line.lineNumber ? section.sectionEndPosition.index + 1 : line.content.length);
         } else if (line.lineNumber === section.sectionEndPosition.line) {
-          content += line.content.substring(section.sectionStartPosition.line === line.lineNumber ? section.sectionStartPosition.index : 0 , section.sectionEndPosition.index);
+          content += line.content.substring(section.sectionStartPosition.line === line.lineNumber ? section.sectionStartPosition.index : 0, section.sectionEndPosition.index + 1);
         } else {
           content += line.content + '\n';
         }
       } else {
         // if it is in child section
         // add the content from the last check index to the end of the line
-          const contentFromEndOfTheLastChildToTheEndOfLine = line.content.substring(lastCheckedIndex, section.sectionEndPosition.index);
+        // only get the remaining content if the last checked index is larger than 0. If it's 0, it means it's a new line that belongs to the child section. Not part of a string between the parent and the child.
+        // i.e. it is for <1000>CONTENT_TO_CAPTURE<500>CONTENT_TO_LEAVE_OUT</></500>
+        if (lastCheckedIndex > 0) {
+          const contentFromEndOfTheLastChildToTheEndOfLine = line.content.substring(lastCheckedIndex, section.sectionEndPosition.index + 1);
           content += contentFromEndOfTheLastChildToTheEndOfLine;
+        }
       }
     }
   }
   // replace the section's markers
   content = content.replace(options.getMarkerRegex(), '');
+  // replace all excluded content patterns
+  if (options?.excludedContentPatterns.size > 0) {
+    for (const pattern of options.excludedContentPatterns) {
+      content = content.replaceAll(new RegExp(pattern, 'g'), '');
+    }
+  }
   return content;
 };
 

@@ -8,6 +8,10 @@ export class WritingPlanOptions {
   // the current writing speed: words per minute;
   currentWritingSpeed: number = 0;
   documentName: string | null = "";
+  // whether a section with child sections should only count its own words or words of all child sections as well.
+  parentIncludeChildWordCount = true;
+  // the patterns that will be excluded from the content and hence stats of the sections
+  excludedContentPatterns: Set<string> = new Set();
 
   constructor(options?: Partial<WritingPlanOptions>) {
     if (options) {

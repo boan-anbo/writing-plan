@@ -3,6 +3,7 @@ import { isCloseMarker, isOpenMarker } from './entities/is-open-marker';
 import { WritingPlanOptions } from './entities/writing-plan-options';
 import { Section } from './section';
 import { generateSectionsFromText } from './section-tree';
+import { MarkerMatch } from './marker-match';
 
 export class WritingPlan {
   readonly options: WritingPlanOptions;
@@ -11,6 +12,7 @@ export class WritingPlan {
   readonly sections: Section[];
   readonly totalBalance: number;
   readonly totalTarget: number;
+  readonly totalWords: number;
   readonly totalSections: number;
 
   constructor(text: string, options?: WritingPlanOptions) {
@@ -43,6 +45,11 @@ export class WritingPlan {
       (acc, section) => acc + section.wordTarget,
       0
     );
+    // calculate total words
+    this.totalWords = this.sections.reduce(
+      (acc, section) => acc + section.wordCountSelf,
+      0
+    );
     // total sections
     this.totalSections = this.sections.length;
 
@@ -52,9 +59,47 @@ export class WritingPlan {
     return this.info.hasPlan;
   }
 
+  // get a copy of writing plan with all the sections but empty content
+  getSkeletonPlan(): string {
+    // get all markers
+    const allMarkers: MarkerMatch[] = this.sections.reduce(
+      (acc, section) => acc.concat(section.getMarkerMatch()),
+      []
+    );
+
+    // sort first according to marker line, and then according to marker start index
+    const sortedAllMarkers = allMarkers.sort((a, b) => {
+      if (a.markerLine < b.markerLine) {
+        return -1;
+      }
+      if (a.markerLine > b.markerLine) {
+        return 1;
+      }
+      if (a.markerStartIndex < b.markerStartIndex) {
+        return -1;
+      }
+      if (a.markerStartIndex > b.markerStartIndex) {
+        return 1;
+      }
+      return 0;
+    });
+
+    return sortedAllMarkers.map(marker => marker.marker).join('\n');
+
+  }
+
+  clearAllContent() {
+    this.sections.forEach(section => section.clearContent());
+  }
+
+  // get all content of sections by joining all text
+  getAllSectionContents() {
+    return this.sections.map(section => section.content).join(' ');
+  }
+
   getSectionByMarker(line: number, startIndex: number, length: number): Section | null {
-    const checkOpenMarker = (section: Section, line, startIndex, length) => section.markerOpenLine === line && section.markerOpenIndex === startIndex && section.markerOpenLength === length;
-    const checkCloseMarker = (section: Section, line, startIndex, length) => section.markerCloseLine === line && section.markerCloseIndex === startIndex && section.markerCloseLength === length;
+    const checkOpenMarker = (section: Section, line, startIndex, length) => section.markerOpenLine === line && section.markerOpenStartIndex === startIndex && section.markerOpenLength === length;
+    const checkCloseMarker = (section: Section, line, startIndex, length) => section.markerCloseLine === line && section.markerCloseStartIndex === startIndex && section.markerCloseLength === length;
     return this.sections.find(section => checkOpenMarker(section, line, startIndex, length) || checkCloseMarker(section, line, startIndex, length)) ?? null;
   }
 
@@ -147,10 +192,10 @@ export class WritingPlan {
       .filter(section => section.markerOpenLine <= line && section.markerCloseLine >= line)
       .filter(section => {
         if (section.markerOpenLine === line) {
-          return section.markerOpenIndex <= index;
+          return section.markerOpenStartIndex <= index;
         }
         if (section.markerCloseLine === line) {
-          return (section.markerCloseIndex + section.markerCloseLength) >= index;
+          return (section.markerCloseStartIndex + section.markerCloseLength) >= index;
         }
         return true;
       });
@@ -179,6 +224,10 @@ export class WritingPlan {
 
   isCloseMarker(markerString: string): boolean {
     return isCloseMarker(markerString, this.options);
+  }
+
+  hasSectionId(sectionId: string): boolean {
+    return this.sections.some(section => section.id === sectionId);
   }
 
 

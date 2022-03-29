@@ -24,7 +24,7 @@ export const extractMarkerTokens = (
         const markerEndIndex = (markerStartIndex + marker.length) - 1; // eg. < is 10, < in </> should be 12, not 10 + length (3).
         markers.push({
           marker,
-          markerOpenLine: lineNumber,
+          markerLine: lineNumber,
           markerStartIndex,
           markerEndIndex,
           isOpenMarker: isOpenMarker(marker, options),
@@ -37,6 +37,7 @@ export const extractMarkerTokens = (
   return markers;
 };
 
+// the central operation of the section tree, with all essential steps to build the tree.
 export const generateSectionsFromText = (
   text: string,
   options: WritingPlanOptions
@@ -46,13 +47,34 @@ export const generateSectionsFromText = (
   const sections = generateSectionFromToken(tokens, options);
   const sectionsWithContent = populatSectionsWithContent(lines, sections, options);
   const sectionsWithWordTargetsCalculated = populateSectionWordTargets(sectionsWithContent);
-  return sectionsWithWordTargetsCalculated
+  // update word targets and stats
+  const sectionsWithItsOwnWordCounts = sectionsWithWordTargetsCalculated
     // update word states
     .map((section) => {
     section.updateWordStat();
     return section;
   });
+  // populate children word countsk
+  const sectionWithChildrenWordCounts =  populateChildrenWordCounts(sectionsWithItsOwnWordCounts);
+  // return the final result with word count refreshed
+  return sectionWithChildrenWordCounts.map((section) => {
+    section.updateWordStat();
+    return section;
+  });
 
+};
+
+const populateChildrenWordCounts = (sections: Section[]): Section[] => {
+  // find all the children of the a section, and add all its children sections' word count to the parent section.
+  return sections.map((section) => {
+    const children = sections.filter((s) => s.parentId === section.id);
+    if (children.length > 0) {
+      section.wordCountChildren = children.reduce((acc, child) => {
+        return acc + child.wordCountSelf;
+      }, 0);
+    }
+    return section;
+  });
 };
 
 export const populatSectionsWithContent = (allLines: Line[], sections: Section[], options: WritingPlanOptions): Section[] => {
@@ -208,9 +230,9 @@ export const generateSectionFromToken = (
     const lastOpenedSection = openedSectionStack.pop();
     const errorMarker = lastOpenedSection.marker;
     const errorLine = lastOpenedSection.markerOpenLine;
-    const errorStartIndex = lastOpenedSection.markerOpenIndex;
+    const errorStartIndex = lastOpenedSection.markerOpenStartIndex;
     const errorEndIndex =
-      lastOpenedSection.markerOpenIndex + lastOpenedSection.markerOpenLength;
+      lastOpenedSection.markerOpenStartIndex + lastOpenedSection.markerOpenLength;
     throw new SectionTreeParseError(
       `There are unclosed sections.`,
       errorLine,

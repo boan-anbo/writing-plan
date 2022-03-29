@@ -10,21 +10,24 @@ export class Section {
   id: string = v4();
   level: number = 0;
   marker: string = '';
+  markerClose: string = '';
   options: WritingPlanOptions = new WritingPlanOptions();
   sectionStartPosition: Position;
   sectionEndPosition: Position;
   markerOpenLine: number = 0;
-  markerOpenIndex: number = 0;
+  markerOpenStartIndex: number = 0;
   markerOpenEndIndex: number = 0;
   markerOpenLength: number = 0;
   markerCloseLine: number = 0;
-  markerCloseIndex: number = 0;
+  markerCloseStartIndex: number = 0;
   markerCloseLength: number = 0;
   markerCloseEndIndex: number = 0;
   title: string | null = null;
   content: string = '';
   // the word target set specifically and manually for the marker, not the caculated one;
   wordTarget: number | null = null;
+  wordCountSelf: number = 0;
+  wordCountChildren: number = 0;
   wordCount: number = 0;
   wordBalance: number = 0;
   // the word count is calculated based on others, not assigned manually.
@@ -84,8 +87,8 @@ export class Section {
       const section = new Section(
         {
           marker: markerMatch.marker,
-          markerOpenLine: markerMatch.markerOpenLine,
-          markerOpenIndex: markerMatch.markerStartIndex,
+          markerOpenLine: markerMatch.markerLine,
+          markerOpenStartIndex: markerMatch.markerStartIndex,
           markerOpenEndIndex: markerMatch.markerStartIndex + markerMatch.marker.length - 1,
           markerOpenLength: markerMatch.markerLength
         },
@@ -110,16 +113,17 @@ export class Section {
   }
 
   closeSection(
-    marker: MarkerMatch,
+    marker: MarkerMatch
   ): Section {
     if (marker.isCloseMarker) {
-      this.markerCloseLine = marker.markerOpenLine;
-      this.markerCloseIndex = marker.markerStartIndex;
+      this.markerCloseLine = marker.markerLine;
+      this.markerCloseStartIndex = marker.markerStartIndex;
       this.markerCloseLength = marker.markerLength;
       this.markerCloseEndIndex = marker.markerEndIndex;
+      this.markerClose = marker.marker;
 
       // add position
-      this.sectionStartPosition = new Position(this.markerOpenLine, this.markerOpenIndex);
+      this.sectionStartPosition = new Position(this.markerOpenLine, this.markerOpenStartIndex);
 
       this.sectionEndPosition = new Position(this.markerCloseLine, this.markerCloseEndIndex);
       this.content = '';
@@ -134,10 +138,10 @@ export class Section {
   getSectionLinesRange(): [Position, Position] {
     return [{
       line: this.markerOpenLine,
-      index: this.markerOpenIndex
+      index: this.markerOpenStartIndex
     }, {
       line: this.markerCloseLine,
-      index: this.markerCloseIndex + this.markerCloseLength
+      index: this.markerCloseStartIndex + this.markerCloseLength
     }];
   }
 
@@ -145,16 +149,22 @@ export class Section {
     return (
       lineNumber >= this.markerOpenLine &&
       lineNumber <= this.markerCloseLine &&
-      startIndex >= this.markerOpenIndex &&
-      startIndex <= this.markerCloseIndex
+      startIndex >= this.markerOpenStartIndex &&
+      startIndex <= this.markerCloseStartIndex
     );
+  }
+
+  clearContent() {
+    this.content = '';
   }
 
   updateWordStat() {
 
-    this.wordCount = countWords(this.content);
+    this.wordCountSelf = countWords(this.content);
+    // calculate combined word count
+    this.wordCount = this.wordCountSelf + this.wordCountChildren;
     // calculate word balance
-    this.wordBalance = this.wordCount - this.wordTarget;
+    this.wordBalance = this.wordCountSelf - this.wordTarget;
     // calculate whether completed
     this.completed = this.wordBalance >= 0;
     // if current writing speed is provided calculate ETA in minutes
@@ -165,6 +175,22 @@ export class Section {
     }
   }
 
+  // get both open and end markers and return them as marker matches
+  getMarkerMatch(): MarkerMatch [] {
+    const markerOpenMatch = new MarkerMatch(
+      this.markerOpenLine,
+      this.markerOpenStartIndex,
+      this.markerOpenEndIndex,
+      this.marker,
+      true
+    );
+    const markerCloseMatch = new MarkerMatch(
+      this.markerCloseLine,
+      this.markerCloseStartIndex,
+      this.markerCloseEndIndex,
+      this.markerClose,
+      false
+    );
+    return [markerOpenMatch, markerCloseMatch];
+  }
 }
-
-

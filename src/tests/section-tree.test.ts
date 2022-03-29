@@ -1,8 +1,8 @@
 import { SectionTreeParseError } from "../lib/entities/section-tree-parse-error";
 import { WritingPlanOptions } from "../lib/entities/writing-plan-options";
+import { getLinesFromText } from '../lib/reader';
 import { extractMarkerTokens, generateSectionsFromText } from "../lib/section-tree";
 import WritingPlan from "../lib/writing-plan";
-import { getLinesFromText } from '../lib/reader';
 
 
 
@@ -118,7 +118,7 @@ it('sections should have correct end index', () => {
   const result = new WritingPlan(text);
 
   expect(result.sections[0].markerOpenEndIndex).toBe(5)
-  expect(result.sections[0].markerCloseIndex).toBe(11)
+  expect(result.sections[0].markerCloseStartIndex).toBe(11)
   expect(result.sections[0].markerCloseEndIndex).toBe(13)
 })
 
@@ -132,3 +132,19 @@ it('sections should have start and end positions', () => {
     .toEqual(13);
 
 })
+
+it('should exclude unwanted content patterns', () => {
+  const text = '<1000>Good{{fewiaofpejwaio fjfioewfp  fewa few}}Ideas</><200>fjeiwoafe waejfiowapfewa</>';
+  const result = new WritingPlan(text, new WritingPlanOptions({
+  }));
+  expect(result.totalWords).toBe(6)
+
+  const excludedResult = new WritingPlan(text, new WritingPlanOptions({
+    excludedContentPatterns: new Set(['{{.*?}}']),
+  }));
+  expect(excludedResult.getFirstSection().content).toBe('GoodIdeas')
+  expect(excludedResult.getAllSectionContents()).toBe('GoodIdeas fjeiwoafe waejfiowapfewa')
+  expect(excludedResult.totalWords).toBe(3)
+})
+
+

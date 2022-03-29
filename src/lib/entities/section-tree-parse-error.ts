@@ -29,8 +29,8 @@ export class SectionTreeParseError extends Error {
     return new SectionTreeParseError(
       message,
       section.markerOpenLine,
-      section.markerOpenIndex,
-      section.markerOpenIndex + section.markerOpenLength,
+      section.markerOpenStartIndex,
+      section.markerOpenStartIndex + section.markerOpenLength,
       section.marker
     );
   }
@@ -41,7 +41,7 @@ export class SectionTreeParseError extends Error {
   ): SectionTreeParseError {
     return new SectionTreeParseError(
       message,
-      marker.markerOpenLine,
+      marker.markerLine,
       marker.markerStartIndex,
       marker.markerEndIndex,
       marker.marker
