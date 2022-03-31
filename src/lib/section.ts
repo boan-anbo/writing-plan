@@ -27,6 +27,7 @@ export class Section {
   // the word target set specifically and manually for the marker, not the caculated one;
   wordTargetNominal: number | null = null;
   wordTargetActual: number | null = null;
+  wordTargetOverflow: number | null = null;
   wordCountSelf: number = 0;
   wordCountChildren: number = 0;
   wordCount: number = 0;
@@ -171,6 +172,8 @@ export class Section {
     }
     // if wordTarget Acutal is larger than wordTarget Nominal, then the section is overflown, meaning the planned words cannot satisfy the needs of the children sections
     this.isSectionTargetOverflown = this.wordTargetNominal < this.wordTargetActual;
+    // update overflow number
+    this.wordTargetOverflow = this.wordTargetActual - this.wordTargetNominal;
   }
 
   // get both open and end markers and return them as marker matches

@@ -16,6 +16,7 @@ export class WritingPlan {
   readonly totalWordCount: number;
   readonly totalSections: number;
   readonly isTotalTargetOverflown: boolean = false;
+  readonly totalTargetOverflown: number = 0;
 
   constructor(text: string, options?: WritingPlanOptions) {
     if (!text) {
@@ -59,6 +60,9 @@ export class WritingPlan {
 
     // calculate total balance, not counting those exceeding the word target
     this.totalBalance = this.totalWordCount - this.totalTargetActual;
+
+    // calculate total target overflown
+    this.totalTargetOverflown = this.totalTargetActual - this.totalTargetNominal;
 
   }
 
