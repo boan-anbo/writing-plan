@@ -121,7 +121,7 @@ const newText =  "<1000>\n" +
 it('should reconstruct the basic structure of the text with only the markers', () => {
   const plan = new WritingPlan('<1000>One</><1000>Two<2000>Three</></>');
   const skeleton = plan.getSkeletonPlan();
-  expect(skeleton).toBe('<1000>\n</>\n<1000>\n<2000>\n</>\n</>');
+  expect(skeleton).toBe('<1000>\n\n</>\n\n<1000>\n\n<2000>\n\n</>\n\n</>');
 
   const plan2 = new WritingPlan("<1000>\n" +
     "Two words\n" +
@@ -139,6 +139,7 @@ it('should reconstruct the basic structure of the text with only the markers', (
     "</>");
 
   const skeleton2 = plan2.getSkeletonPlan();
-  expect(skeleton2).toBe('<1000>\n<>\n</>\n<>\n</>\n</>');
+  expect(skeleton2).toBe('<1000>\n\n<>\n\n</>\n\n<>\n\n</>\n\n</>');
 
 })
+

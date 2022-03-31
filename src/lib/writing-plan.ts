@@ -37,7 +37,7 @@ export class WritingPlan {
     // calculate total balance, not counting those exceeding the word target
     this.totalBalance = this.sections.reduce(
       (acc, section) =>
-        acc + (section.wordBalance < 0 ? section.wordBalance : 0),
+        acc + (section.wordBalanceSelf < 0 ? section.wordBalanceSelf : 0),
       0
     );
     // calculate total target

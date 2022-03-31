@@ -16,7 +16,7 @@ it('generate unique timestamp', () => {
 
   }
 
-  console.log('all generated ids: ', allIdGenerateds);
+  // console.log('all generated ids: ', allIdGenerateds);
   // console.log('all conflict ids: ', conflicted);
   expect(allIdGenerateds.length).toBe(5000);
   // expect(conflicted.length).toBe(0);
@@ -45,7 +45,4 @@ it('should generate id based on base number', () => {
   expect(second.endsWith('2')).toBe(true)  // first section
   plan.getFirstSection().id = second;
   plan.sections[1].id = first;
-  // const anotherSecond =  generateUniqueSectionId(plan );
-  // expect(anotherSecond.endsWith('3')).toBe(true)  // first section
-
 })

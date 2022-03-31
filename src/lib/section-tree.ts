@@ -51,11 +51,11 @@ export const generateSectionsFromText = (
   const sectionsWithItsOwnWordCounts = sectionsWithWordTargetsCalculated
     // update word states
     .map((section) => {
-    section.updateWordStat();
-    return section;
-  });
+      section.updateWordStat();
+      return section;
+    });
   // populate children word countsk
-  const sectionWithChildrenWordCounts =  populateChildrenWordCounts(sectionsWithItsOwnWordCounts);
+  const sectionWithChildrenWordCounts = populateChildrenWordCounts(sectionsWithItsOwnWordCounts);
   // return the final result with word count refreshed
   return sectionWithChildrenWordCounts.map((section) => {
     section.updateWordStat();
@@ -67,14 +67,32 @@ export const generateSectionsFromText = (
 const populateChildrenWordCounts = (sections: Section[]): Section[] => {
   // find all the children of the a section, and add all its children sections' word count to the parent section.
   return sections.map((section) => {
-    const children = sections.filter((s) => s.parentId === section.id);
-    if (children.length > 0) {
-      section.wordCountChildren = children.reduce((acc, child) => {
-        return acc + child.wordCountSelf;
-      }, 0);
-    }
+    section.wordCountChildren = getAllChildrenWordCountRecursively(section, sections);
     return section;
   });
+};
+
+// a recursive function to calculate any section to include all its children and grand children's word count
+const getAllChildrenWordCountRecursively = (section: Section, allSections: Section[], currentWordCount: number = 0): number => {
+  // get all children for the given section
+  const children = allSections.filter((s) => s.parentId === section.id);
+  if (children.length > 0) {
+    // loop over all children
+    children.forEach((child) => {
+      // if it has no children, add the child's word count to the current word count
+      currentWordCount += child.wordCountSelf;
+      // check if this child has children
+      const grandChildren = allSections.filter((s) => s.parentId === child.id);
+      if (grandChildren.length > 0) {
+        // if it has children, recursively call this function to get all its children's word count
+        // add the grand children's word count to the current child's word count
+        currentWordCount = getAllChildrenWordCountRecursively(child, allSections, currentWordCount);
+      }
+    });
+  }
+
+  return currentWordCount;
+
 };
 
 export const populatSectionsWithContent = (allLines: Line[], sections: Section[], options: WritingPlanOptions): Section[] => {
@@ -216,7 +234,7 @@ export const generateSectionFromToken = (
         );
       }
       const completedSection = openedSection.closeSection(
-        currentMarker,
+        currentMarker
       );
       sections.push(completedSection);
     }

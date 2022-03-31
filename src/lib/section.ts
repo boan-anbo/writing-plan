@@ -29,6 +29,7 @@ export class Section {
   wordCountSelf: number = 0;
   wordCountChildren: number = 0;
   wordCount: number = 0;
+  wordBalanceSelf: number = 0;
   wordBalance: number = 0;
   // the word count is calculated based on others, not assigned manually.
   isTargetCalculated: boolean = false;
@@ -164,13 +165,14 @@ export class Section {
     // calculate combined word count
     this.wordCount = this.wordCountSelf + this.wordCountChildren;
     // calculate word balance
-    this.wordBalance = this.wordCountSelf - this.wordTarget;
+    this.wordBalanceSelf = this.wordCountSelf - this.wordTarget;
+    this.wordBalance = this.wordCount - this.wordTarget;
     // calculate whether completed
-    this.completed = this.wordBalance >= 0;
+    this.completed = this.wordBalanceSelf >= 0;
     // if current writing speed is provided calculate ETA in minutes
     if (!this.completed && this.options.currentWritingSpeed > 0) {
       this.estimatedTimeToComplete = Math.round(
-        Math.abs(this.wordBalance) / this.options.currentWritingSpeed
+        Math.abs(this.wordBalanceSelf) / this.options.currentWritingSpeed
       );
     }
   }
