@@ -25,7 +25,8 @@ export class Section {
   title: string | null = null;
   content: string = '';
   // the word target set specifically and manually for the marker, not the caculated one;
-  wordTarget: number | null = null;
+  wordTargetNominal: number | null = null;
+  wordTargetActual: number | null = null;
   wordCountSelf: number = 0;
   wordCountChildren: number = 0;
   wordCount: number = 0;
@@ -44,6 +45,9 @@ export class Section {
   parentId: string | null = null;
   order: number;
   levelOrder: number;
+  wordTargetChildren: number | null = null;
+  // if the planned word target can satisfy the children, i.e. the children do not have actual planned targets that when combined exceeds the planned parent target.
+  isSectionTargetOverflown: boolean = false;
 
   constructor(section: Partial<Section>, options: WritingPlanOptions) {
     if (!section.marker || !options.getMarkerRegex().test(section.marker)) {
@@ -69,7 +73,7 @@ export class Section {
         const parsedNumber = parseInt(wordtarget, 10);
         // allow only integers  and positive numbers
         if (Number.isInteger(parsedNumber) && parsedNumber > 1) {
-          this.wordTarget = parsedNumber;
+          this.wordTargetNominal = parsedNumber;
         }
       }
       const { title } = matchResults.groups;
@@ -97,17 +101,7 @@ export class Section {
       );
       return section;
     }
-    if (markerMatch.isCloseMarker) {
-      //   const section = new Section(
-      //     {
-      //       marker: markerMatch.marker,
-      //       markerCloseLine: markerMatch.markerOpenLine,
-      //       markerCloseIndex: markerMatch.markerStartIndex,
-      //       markerCloseLength: markerMatch.markerLength,
-      //     },
-      //     options
-      //   );
-    }
+
     throw new Error(
       `Invalid marker open or close status: ${markerMatch.marker}`
     );
@@ -159,14 +153,14 @@ export class Section {
     this.content = '';
   }
 
-  updateWordStat() {
+  updateSectionStatus() {
 
     this.wordCountSelf = countWords(this.content);
     // calculate combined word count
     this.wordCount = this.wordCountSelf + this.wordCountChildren;
     // calculate word balance
-    this.wordBalanceSelf = this.wordCountSelf - this.wordTarget;
-    this.wordBalance = this.wordCount - this.wordTarget;
+    this.wordBalanceSelf = this.wordCountSelf - this.wordTargetActual;
+    this.wordBalance = this.wordCount - this.wordTargetActual;
     // calculate whether completed
     this.completed = this.wordBalanceSelf >= 0;
     // if current writing speed is provided calculate ETA in minutes
@@ -175,6 +169,8 @@ export class Section {
         Math.abs(this.wordBalanceSelf) / this.options.currentWritingSpeed
       );
     }
+    // if wordTarget Acutal is larger than wordTarget Nominal, then the section is overflown, meaning the planned words cannot satisfy the needs of the children sections
+    this.isSectionTargetOverflown = this.wordTargetNominal < this.wordTargetActual;
   }
 
   // get both open and end markers and return them as marker matches

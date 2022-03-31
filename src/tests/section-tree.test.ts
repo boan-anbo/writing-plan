@@ -42,16 +42,16 @@ it('should auto assign word targets for empty tags', () => {
   const sections = generateSectionsFromText(text, new WritingPlanOptions());
   // console.log(JSON.stringify(sections, null, 2))
   expect(sections.length).toBe(8);
-  expect(sections[0].wordTarget).toBe(1000);
-  expect(sections[1].wordTarget).toBe(400);
+  expect(sections[0].wordTargetNominal).toBe(1000);
+  expect(sections[1].wordTargetNominal).toBe(400);
   expect(sections[1].content).toBe('400');
-  expect(sections[2].wordTarget).toBe(200);
-  expect(sections[3].wordTarget).toBe(100);
-  expect(sections[4].wordTarget).toBe(100);
-  expect(sections[5].wordTarget).toBe(50);
-  expect(sections[6].wordTarget).toBe(50);
+  expect(sections[2].wordTargetNominal).toBe(200);
+  expect(sections[3].wordTargetNominal).toBe(100);
+  expect(sections[4].wordTargetNominal).toBe(100);
+  expect(sections[5].wordTargetNominal).toBe(50);
+  expect(sections[6].wordTargetNominal).toBe(50);
   expect(sections[6].isTargetCalculated).toBe(true);
-  expect(sections[7].wordTarget).toBe(400);
+  expect(sections[7].wordTargetNominal).toBe(400);
 });
 
 it('should calculate estimated complete time', () => {
@@ -146,14 +146,14 @@ it('sections should have start and end positions', () => {
 it('should exclude unwanted content patterns', () => {
   const text = '<1000>Good{{fewiaofpejwaio fjfioewfp  fewa few}}Ideas</><200>fjeiwoafe waejfiowapfewa</>';
   const result = new WritingPlan(text, new WritingPlanOptions({}));
-  expect(result.totalWords).toBe(6);
+  expect(result.totalWordCount).toBe(6);
 
   const excludedResult = new WritingPlan(text, new WritingPlanOptions({
     excludedContentPatterns: new Set(['{{.*?}}'])
   }));
   expect(excludedResult.getFirstSection().content).toBe('GoodIdeas');
   expect(excludedResult.getAllSectionContents()).toBe('GoodIdeas fjeiwoafe waejfiowapfewa');
-  expect(excludedResult.totalWords).toBe(3);
+  expect(excludedResult.totalWordCount).toBe(3);
 });
 
 

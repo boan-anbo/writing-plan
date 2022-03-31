@@ -52,7 +52,7 @@ it("should extract section from text", () => {
     const sectionWithNumbersOnly = new Section({
         marker: marketWithNumbersOnly
     },  new WritingPlanOptions());
-    expect(sectionWithNumbersOnly.wordTarget).toBe(1000);
+    expect(sectionWithNumbersOnly.wordTargetNominal).toBe(1000);
 
     const sectionTitle = "Section title";
     const marketWithSectionTitle = `<1000|${sectionTitle}>`;

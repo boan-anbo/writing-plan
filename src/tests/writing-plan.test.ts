@@ -4,7 +4,7 @@ it('should get right total balance', () => {
 
   expect(new WritingPlan('<1000></>').totalBalance).toBe(-1000);
   const newPlan = new WritingPlan('<1000>One</><1000>Two<2000>Three</></>');
-  expect(newPlan.totalBalance).toBe(-3997);
+  expect(newPlan.totalBalance).toBe(-2997);
 
   // const newPlanOverBudgeted = new WritingPlan( '<2>One<3></></>')
   // console.log(JSON.stringify(newPlanOverBudgeted, null, 2));
@@ -95,7 +95,7 @@ it('parent sections should correctly include all child section word counts', () 
     "</>"
 
   const plan = new WritingPlan(text);
-  expect(plan.totalWords).toBe(16);
+  expect(plan.totalWordCount).toBe(16);
   expect(plan.sections[0].wordCount).toBe(16);
   expect(plan.sections[0].wordCountSelf).toBe(2);
   expect(plan.sections[0].wordCountChildren).toBe(14);
@@ -112,7 +112,7 @@ const newText =  "<1000>\n" +
   "</>\n"
 
   const plan = new WritingPlan(newText);
-  expect(plan.totalWords).toBe(4);
+  expect(plan.totalWordCount).toBe(4);
   expect(plan.sections[0].wordCountSelf).toBe(2);
   expect(plan.sections[1].wordCountSelf).toBe(2);
 })
@@ -143,3 +143,25 @@ it('should reconstruct the basic structure of the text with only the markers', (
 
 })
 
+
+it('should calculate correct total target', () => {
+  const text = "<300>One<200><300><50>Two</></><100></></><100></><50></><25></></><400>Three</>"
+  const plan = new WritingPlan(text);
+  expect(plan.sections[0].wordTargetActual).toBe(575);
+  expect(plan.sections[0].wordTargetNominal).toBe(300);
+  expect(plan.sections[0].wordBalance).toBe(-573);
+  expect(plan.sections[1].wordTargetActual).toBe(400);
+  expect(plan.sections[1].wordTargetNominal).toBe(200);
+  expect(plan.sections[2].wordTargetActual).toBe(300);
+  expect(plan.sections[2].wordTargetNominal).toBe(300);
+  expect(plan.sections[2].wordBalance).toBe(-299);
+  expect(plan.totalTargetNominal).toBe(700);
+  expect(plan.totalTargetActual).toBe(975);
+  expect(plan.totalBalance).toBe(-972);
+  expect(plan.isTotalTargetOverflown).toBe(true);
+  expect(plan.sections[0].isSectionTargetOverflown).toBe(true);
+  expect(plan.sections[1].isSectionTargetOverflown).toBe(true);
+  expect(plan.sections[2].isSectionTargetOverflown).toBe(false);
+  expect(plan.sections[3].isSectionTargetOverflown).toBe(false);
+
+})

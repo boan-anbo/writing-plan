@@ -51,25 +51,49 @@ export const generateSectionsFromText = (
   const sectionsWithItsOwnWordCounts = sectionsWithWordTargetsCalculated
     // update word states
     .map((section) => {
-      section.updateWordStat();
+      section.updateSectionStatus();
       return section;
     });
   // populate children word countsk
-  const sectionWithChildrenWordCounts = populateChildrenWordCounts(sectionsWithItsOwnWordCounts);
+  const sectionWithChildrenWordCounts = populateChildrenWordCountsAndTargets(sectionsWithItsOwnWordCounts);
   // return the final result with word count refreshed
   return sectionWithChildrenWordCounts.map((section) => {
-    section.updateWordStat();
+    section.updateSectionStatus();
     return section;
   });
 
 };
 
-const populateChildrenWordCounts = (sections: Section[]): Section[] => {
+const populateChildrenWordCountsAndTargets = (sections: Section[]): Section[] => {
   // find all the children of the a section, and add all its children sections' word count to the parent section.
   return sections.map((section) => {
     section.wordCountChildren = getAllChildrenWordCountRecursively(section, sections);
+    section.wordTargetActual = section.wordTargetNominal + getAllChildrenWordTargetOverflowRecursively(section, sections);
     return section;
   });
+};
+
+const getAllChildrenWordTargetOverflowRecursively = (section: Section, allSections: Section[], overflow: number=0): number => {
+  // get all children for the given section
+  const children = allSections.filter((s) => s.parentId === section.id);
+  if (children.length > 0) {
+    // loop over all children
+    const allDirectChildrenWordTarget = children.reduce((acc, child) => {
+      return acc + child.wordTargetNominal;
+    }, 0);
+
+    const difference = section.wordTargetNominal - allDirectChildrenWordTarget;
+    // if there is overflow
+    if (difference < 0) {
+      overflow += Math.abs(difference);
+    }
+
+    // recursively call this function on all children
+    children.forEach((child) => {
+      overflow = getAllChildrenWordTargetOverflowRecursively(child, allSections, overflow);
+    });
+  }
+  return overflow;
 };
 
 // a recursive function to calculate any section to include all its children and grand children's word count
@@ -119,7 +143,7 @@ export const populateSectionWordTargets = (
   sections: Section[]
 ): Section[] => {
   const rootSections = sections.filter((s) => s.level === 0);
-  if (!rootSections.every((s) => s.wordTarget)) {
+  if (!rootSections.every((s) => s.wordTargetNominal)) {
     throw new SectionTreeParseError('Root sections must have word targets');
   }
   // make sure all children of root sections have word targets
@@ -128,17 +152,17 @@ export const populateSectionWordTargets = (
   }
 
   let tryCount = 0;
-  while (sections.some((s) => !s.wordTarget)) {
-    const unsetSection = sections.find((s) => !s.wordTarget);
+  while (sections.some((s) => !s.wordTargetNominal)) {
+    const unsetSection = sections.find((s) => !s.wordTargetNominal);
     const parentSection = sections.find(
-      (s) => s.id === unsetSection.parentId && s.wordTarget
+      (s) => s.id === unsetSection.parentId && s.wordTargetNominal
     );
     sections = populateWordTargetDivision(parentSection, sections);
 
     if (tryCount > 100) {
       throw SectionTreeParseError.fromSection(
         'Could not populate all sections with word targets, perhaps due to unclosed or unassigned root sections',
-        sections.find((s) => !s.wordTarget)
+        sections.find((s) => !s.wordTargetNominal)
       );
     }
     tryCount++;
@@ -152,21 +176,21 @@ export const populateWordTargetDivision = (
   sections: Section[]
 ): Section[] => {
   // if root section has no target, then return the sections as is.
-  if (!rootSection.wordTarget) {
+  if (!rootSection.wordTargetNominal) {
     return sections;
   }
   const childrenWithWordTargets = sections.filter(
-    (s) => s.parentId === rootSection.id && s.wordTarget
+    (s) => s.parentId === rootSection.id && s.wordTargetNominal
   );
   const totalWordTargets = childrenWithWordTargets.reduce(
-    (acc, s) => acc + s.wordTarget,
+    (acc, s) => acc + s.wordTargetNominal,
     0
   );
   // the total words NOT written, also word budget that sub sections can use
-  const missingWordTargets = rootSection.wordTarget - totalWordTargets;
+  const missingWordTargets = rootSection.wordTargetNominal - totalWordTargets;
 
   const childrenWithoutWordTargets = sections.filter(
-    (s) => s.parentId === rootSection.id && !s.wordTarget
+    (s) => s.parentId === rootSection.id && !s.wordTargetNominal
   );
   const childrenWithoutWordTargetsLength = childrenWithoutWordTargets.length;
   const missingWordTargetsPerChild = Math.floor(
@@ -174,7 +198,7 @@ export const populateWordTargetDivision = (
   );
   for (const child of childrenWithoutWordTargets) {
     const section = sections.find((s) => s.id === child.id);
-    section.wordTarget = missingWordTargetsPerChild;
+    section.wordTargetNominal = missingWordTargetsPerChild;
     section.isTargetCalculated = true;
     // if the section has not been completed yet with words to be written
     if (missingWordTargets < 0) {

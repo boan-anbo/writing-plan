@@ -11,9 +11,11 @@ export class WritingPlan {
   readonly estimatedTimeToComplete: number;
   readonly sections: Section[];
   readonly totalBalance: number;
-  readonly totalTarget: number;
-  readonly totalWords: number;
+  readonly totalTargetNominal: number;
+  readonly totalTargetActual: number;
+  readonly totalWordCount: number;
   readonly totalSections: number;
+  readonly isTotalTargetOverflown: boolean = false;
 
   constructor(text: string, options?: WritingPlanOptions) {
     if (!text) {
@@ -34,24 +36,29 @@ export class WritingPlan {
       (acc, section) => acc + section.estimatedTimeToComplete,
       0
     );
-    // calculate total balance, not counting those exceeding the word target
-    this.totalBalance = this.sections.reduce(
-      (acc, section) =>
-        acc + (section.wordBalanceSelf < 0 ? section.wordBalanceSelf : 0),
+    // calculate total target nominal (i.e. based on marker)
+    this.totalTargetNominal = this.getRootSections().reduce(
+      (acc, section) => acc + section.wordTargetNominal,
       0
     );
-    // calculate total target
-    this.totalTarget = this.sections.reduce(
-      (acc, section) => acc + section.wordTarget,
+    // calculate total target actual, including overflow
+    this.totalTargetActual = this.getRootSections().reduce(
+      (acc, section) => acc + section.wordTargetActual,
       0
     );
     // calculate total words
-    this.totalWords = this.sections.reduce(
+    this.totalWordCount = this.sections.reduce(
       (acc, section) => acc + section.wordCountSelf,
       0
     );
     // total sections
     this.totalSections = this.sections.length;
+
+    // update overflown status
+    this.isTotalTargetOverflown = this.totalTargetActual > this.totalTargetNominal;
+
+    // calculate total balance, not counting those exceeding the word target
+    this.totalBalance = this.totalWordCount - this.totalTargetActual;
 
   }
 
@@ -175,7 +182,7 @@ export class WritingPlan {
   }
 
   toString() {
-    return `WritingPlan: ${this.totalSections} sections, ${this.totalBalance} balance, ${this.totalTarget} target, ${this.estimatedTimeToComplete} minutes`;
+    return `WritingPlan: ${this.totalSections} sections, ${this.totalBalance} balance, ${this.totalTargetNominal} target, ${this.estimatedTimeToComplete} minutes`;
   }
 
   getFirstSection(): Section | null {
