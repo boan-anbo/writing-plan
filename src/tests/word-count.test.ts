@@ -24,3 +24,5 @@ it('root section should capture the grant children sections word count', () => {
   expect(plan.getFirstSection().wordBalanceSelf).toBe(-299);
   expect(plan.totalTargetNominal).toBe(100);
 })
+
+

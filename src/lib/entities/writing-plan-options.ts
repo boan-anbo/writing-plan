@@ -12,6 +12,10 @@ export class WritingPlanOptions {
   parentIncludeChildWordCount = true;
   // the patterns that will be excluded from the content and hence stats of the sections
   excludedContentPatterns: Set<string> = new Set();
+  /**
+  /*  the patterns that will be included in the content and but excluded from stats of the sections, i.e. they are still in content but not counted in stats;
+   */
+  excludedStatsPatterns: Set<string> = new Set();
 
   constructor(options?: Partial<WritingPlanOptions>) {
     if (options) {

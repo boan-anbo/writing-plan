@@ -154,9 +154,22 @@ export class Section {
     this.content = '';
   }
 
+  getContentToCount() {
+    let content = this.content;
+    if (this.options.excludedStatsPatterns.size > 0) {
+        // loop through the patterns and replace them with empty string
+        this.options.excludedStatsPatterns.forEach((pattern) => {
+            const regex = new RegExp(pattern, 'g');
+            content = content.replaceAll(regex, ' ');
+        });
+    }
+
+    return content
+  }
+
   updateSectionStatus() {
 
-    this.wordCountSelf = countWords(this.content);
+    this.wordCountSelf = countWords(this.getContentToCount());
     // calculate combined word count
     this.wordCount = this.wordCountSelf + this.wordCountChildren;
     // calculate word balance
