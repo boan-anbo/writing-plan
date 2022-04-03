@@ -198,6 +198,7 @@ export class Section {
   }
 
   private updateGoalStatus(): void {
+    // set acceptable range to be within the 0.05 of the target or as designated by the user.
     const acceptableRange = this.options.acceptableRange ?? Math.round(this.wordTargetActual * 0.05);
     if (Math.abs(this.wordBalance) <= acceptableRange)  {
       this.goalStatus = GoalStatus.COMPLETED;

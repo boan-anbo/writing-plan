@@ -4,8 +4,10 @@ import { WritingPlanOptions } from './entities/writing-plan-options';
 import { Section } from './section';
 import { generateSectionsFromText } from './section-tree';
 import { MarkerMatch } from './marker-match';
+import { exportMarkdown } from './utils/output-markdown';
 
 export class WritingPlan {
+  readonly originalText: string;
   readonly options: WritingPlanOptions;
   readonly info: WritingInfo;
   readonly estimatedTimeToComplete: number;
@@ -22,6 +24,7 @@ export class WritingPlan {
     if (!text) {
       throw new Error('WritingPlan cannot be instantiated without text');
     }
+    this.originalText = text;
     if (!options) {
       // use default options if none are provided
       options = new WritingPlanOptions();
@@ -30,6 +33,11 @@ export class WritingPlan {
     this.options = options;
     // load info
     this.info = WritingInfo.fromPlainText(text, options);
+    // if the text has no plan, do not go future and return the object as is;
+    if (!this.info.hasPlan) {
+      return this;
+    }
+
     // load sections
     this.sections = generateSectionsFromText(text, options);
     // combine all estimated times for individual sections
@@ -195,6 +203,10 @@ export class WritingPlan {
 
   getLastSection(): Section | null {
     return this.sections[this.sections.length - 1] ?? null;
+  }
+
+  outPutMarkdown() {
+    return exportMarkdown(this);
   }
 
   getSectionByLineAndIndex(line: number, index: number): Section | null {
