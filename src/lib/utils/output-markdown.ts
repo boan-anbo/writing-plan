@@ -4,10 +4,7 @@ import { ExportMarkdownOptions } from '../entities/export-markdown-options';
 export const exportMarkdown = (plan: WritingPlan): string => {
   let finalText = '';
 
-  let exportOptions;
-  if (!plan.options.exportMarkdownOptions) {
-    exportOptions = new ExportMarkdownOptions();
-  }
+  let exportOptions = plan.options.exportMarkdownOptions ? plan.options.exportMarkdownOptions :     new ExportMarkdownOptions();
 
   plan.sections.forEach(section => {
     finalText += `\n${getMarkdownHeaderByLevel(section.level + 1)} <${section.wordTargetNominal}> ${section.title ?? '' + ''}\n`;
