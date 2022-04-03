@@ -1,5 +1,6 @@
 import { CustomSection } from "../customize-section";
 import { escapeRegExp } from "../utils/regex-util";
+import { ExportMarkdownOptions } from './export-markdown-options';
 
 export class WritingPlanOptions {
   markerBegin: string = "<";
@@ -21,6 +22,11 @@ export class WritingPlanOptions {
    * the range within which the word balance will be accepted as finished.
    */
   acceptableRange;
+
+  /**
+   * the options for exporting markdown
+   */
+  exportMarkdownOptions = new ExportMarkdownOptions();
 
   constructor(options?: Partial<WritingPlanOptions>) {
     if (options) {

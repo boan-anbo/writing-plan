@@ -1,10 +1,11 @@
 import WritingPlan from '../writing-plan';
 import { ExportMarkdownOptions } from '../entities/export-markdown-options';
 
-export const exportMarkdown = (plan: WritingPlan, exportOptions?: ExportMarkdownOptions): string => {
+export const exportMarkdown = (plan: WritingPlan): string => {
   let finalText = '';
 
-  if (!exportOptions) {
+  let exportOptions;
+  if (!plan.options.exportMarkdownOptions) {
     exportOptions = new ExportMarkdownOptions();
   }
 
