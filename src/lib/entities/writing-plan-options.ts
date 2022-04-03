@@ -17,6 +17,11 @@ export class WritingPlanOptions {
    */
   excludedStatsPatterns: Set<string> = new Set();
 
+  /**
+   * the range within which the word balance will be accepted as finished.
+   */
+  acceptableRange;
+
   constructor(options?: Partial<WritingPlanOptions>) {
     if (options) {
       Object.assign(this, options);

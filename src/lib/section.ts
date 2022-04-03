@@ -4,6 +4,7 @@ import { Position } from './entities/Position';
 import { WritingPlanOptions } from './entities/writing-plan-options';
 import { MarkerMatch } from './marker-match';
 import { countWords } from './word-count';
+import { GoalStatus } from './const/goal-status';
 
 
 export class Section {
@@ -22,6 +23,10 @@ export class Section {
   markerCloseStartIndex: number = 0;
   markerCloseLength: number = 0;
   markerCloseEndIndex: number = 0;
+  /**
+   * The status of the goal accomplished for the current section;
+   */
+  goalStatus: GoalStatus = GoalStatus.NOT_STARTED;
   title: string | null = null;
   content: string = '';
   // the word target set specifically and manually for the marker, not the caculated one;
@@ -187,6 +192,22 @@ export class Section {
     this.isSectionTargetOverflown = this.wordTargetNominal < this.wordTargetActual;
     // update overflow number
     this.wordTargetOverflow = this.wordTargetActual - this.wordTargetNominal;
+    // update goal statuses
+    this.updateGoalStatus();
+
+  }
+
+  private updateGoalStatus(): void {
+    const acceptableRange = this.options.acceptableRange ?? Math.round(this.wordTargetActual * 0.05);
+    if (Math.abs(this.wordBalance) <= acceptableRange)  {
+      this.goalStatus = GoalStatus.COMPLETED;
+    } else if (this.wordCount === 0) {
+      this.goalStatus = GoalStatus.NOT_STARTED;
+    } else if (this.wordBalance > acceptableRange) {
+      this.goalStatus = GoalStatus.EXCEEDED;
+    } else {
+      this.goalStatus = GoalStatus.IN_PROGRESS;
+    }
   }
 
   // get both open and end markers and return them as marker matches

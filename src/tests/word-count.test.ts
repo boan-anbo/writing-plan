@@ -1,5 +1,7 @@
 import { countWords } from "../lib/word-count";
 import WritingPlan from '../lib/writing-plan';
+import { WritingPlanOptions } from '../lib/entities/writing-plan-options';
+import { GoalStatus } from '../lib/const/goal-status';
 
 
 it('should return the number of words in a string', () => {
@@ -26,3 +28,22 @@ it('root section should capture the grant children sections word count', () => {
 })
 
 
+it('should have correct goal status', () => {
+  const option = new WritingPlanOptions({
+    acceptableRange: 2
+  })
+  const not_started = `<10></>`
+  expect(new WritingPlan(not_started, option).getFirstSection().goalStatus).toBe(GoalStatus.NOT_STARTED);
+  const completed_shorter = `<10>One Two Three Four Five Six Seven Eight</>`
+  expect(new WritingPlan(completed_shorter, option).getFirstSection().goalStatus).toBe(GoalStatus.COMPLETED);
+  const completed_longer = `<10>One Two Three Four Five Six Seven Eight Nine Ten Eleven Twelve</>`
+  expect(new WritingPlan(completed_longer, option).getFirstSection().goalStatus).toBe(GoalStatus.COMPLETED);
+  // with no options
+  expect(new WritingPlan(completed_longer).getFirstSection().goalStatus).toBe(GoalStatus.EXCEEDED);
+  const in_progress = `<10>One Two Three Four Five</>`
+  expect(new WritingPlan(in_progress, option).getFirstSection().goalStatus).toBe(GoalStatus.IN_PROGRESS);
+  const exceeded = `<10>One Two Three Four Five Six Seven Eight Nine Ten Eleven Twelve Thirteen</>`
+  expect(new WritingPlan(exceeded, option).getFirstSection().goalStatus).toBe(GoalStatus.EXCEEDED);
+
+
+})
