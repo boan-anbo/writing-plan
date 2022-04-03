@@ -229,4 +229,8 @@ export class Section {
     );
     return [markerOpenMatch, markerCloseMatch];
   }
+
+  getSectionDescription(): string {
+    return `${this.title ? `"${this.title.trim()}": ` : ''} T: ${this?.wordTargetNominal} ${this.isSectionTargetOverflown ? `+ ${this.wordTargetOverflow}` : ''} | B: ${this.wordBalance > 0 ? '+' : ''}${this.wordBalance} | W: ${this?.wordCount} `
+  }
 }
