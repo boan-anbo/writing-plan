@@ -6,30 +6,40 @@ export const exportMarkdown = (plan: WritingPlan): string => {
     return plan.originalText;
   }
 
-  let finalText = '';
+  let finalText: string[] = plan.originalText.split('\n');
 
   let exportOptions = plan.options.exportMarkdownOptions ? plan.options.exportMarkdownOptions :     new ExportMarkdownOptions();
 
   plan.sections.forEach(section => {
     const statInfo = `T: ${section?.wordTargetNominal} ${section.isSectionTargetOverflown ? `+ ${section.wordTargetOverflow}` : ''} | B: ${section.wordBalance > 0 ? '+' : ''}${section.wordBalance} | W: ${section?.wordCount}`
     // replace info for writing plan heading
-    finalText += `\n${getMarkdownHeaderByLevel(section.level + 1)} <${section.wordTargetNominal}> ${section.title ?? ''} ${exportOptions.addWritingPlanStats ? ': ' + statInfo : ''}\n`;
-    let content = section.content ?? '';
+    finalText[section.markerOpenLine] = `${getMarkdownHeaderByLevel(section.level + 1)} <${section.wordTargetNominal}> ${section.title ?? ''} ${exportOptions.addWritingPlanStats ? ': ' + statInfo : ''}`;
     // replace info for native markdown heading
     if (exportOptions.increseContentMarkdownLevels) {
-      // use regex to find all markdown headers, if any increase the header level
-      const regex = /^(#+)\s(.*)$/gm;
-      content = content.replace(regex, (_match, headerLevel, headerText) => {
-        // increase the original markdown by header levels of the section
-        const newHeaderLevel = headerLevel.length + (section.level + 1);
-        return `${getMarkdownHeaderByLevel(newHeaderLevel)} ${headerText}`.trim();
-      });
+      // iterate starting from the next line of the marker open line and until the marker close line,
+      // skip the lines that belong to the children sections
+      // and find markdown headers
+      for (let i = section.markerOpenLine + 1; i < section.markerCloseLine; i++) {
+        if (plan.isLineWithinChildrenSection(section, i)) {
+          continue;
+        }
+        const lineContent = finalText[i];
+        const regex = /^(#+)\s(.*)$/gm;
+        const match = regex.exec(finalText[i]);
+        if (match) {
+          const newContent = lineContent.replace(regex, (_match, headerLevel, headerText) => {
+            // increase the original markdown by header levels of the section
+            const newHeaderLevel = headerLevel.length + (section.level + 1);
+            return `${getMarkdownHeaderByLevel(newHeaderLevel)} ${headerText}`.trim();
+          });
+          finalText[i] = newContent;
+        }
+      }
     }
-    content = content.replaceAll('\n', '\n\n');
-    finalText += `\n${content}\n`;
+    // content = content.replaceAll('\n', '\n\n');
   });
 
-  return finalText.trim();
+  return finalText.join('\n');
 
 };
 

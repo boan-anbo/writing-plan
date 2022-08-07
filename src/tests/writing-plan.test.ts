@@ -79,20 +79,20 @@ it('should find immediate previous and next siblings correctly', () => {
 });
 
 it('parent sections should correctly include all child section word counts', () => {
-  const text = "<1000>\n" +
-    "Two words\n" +
-    "<>\n" +
-    "Two Word.\n" +
-    "Four word.\n" +
-    "Six word.\n" +
-    "</>\n" +
-    "<>\n" +
-    "Two Word.\n" +
-    "Four word.\n" +
-    "Six word.\n" +
-    "Eight word.\n" +
-    "</>\n" +
-    "</>"
+  const text = '<1000>\n' +
+    'Two words\n' +
+    '<>\n' +
+    'Two Word.\n' +
+    'Four word.\n' +
+    'Six word.\n' +
+    '</>\n' +
+    '<>\n' +
+    'Two Word.\n' +
+    'Four word.\n' +
+    'Six word.\n' +
+    'Eight word.\n' +
+    '</>\n' +
+    '</>';
 
   const plan = new WritingPlan(text);
   expect(plan.totalWordCount).toBe(16);
@@ -101,21 +101,21 @@ it('parent sections should correctly include all child section word counts', () 
   expect(plan.sections[0].wordCountChildren).toBe(14);
   expect(plan.sections[1].wordCountSelf).toBe(6);
   expect(plan.sections[2].wordCountSelf).toBe(8);
-})
+});
 
-it('should count section own wordcount correctly', () =>{
-const newText =  "<1000>\n" +
-  "One Two\n" +
-  "<>\n" +
-  "Three four\n" +
-  "</>\n" +
-  "</>\n"
+it('should count section own wordcount correctly', () => {
+  const newText = '<1000>\n' +
+    'One Two\n' +
+    '<>\n' +
+    'Three four\n' +
+    '</>\n' +
+    '</>\n';
 
   const plan = new WritingPlan(newText);
   expect(plan.totalWordCount).toBe(4);
   expect(plan.sections[0].wordCountSelf).toBe(2);
   expect(plan.sections[1].wordCountSelf).toBe(2);
-})
+});
 
 
 it('should reconstruct the basic structure of the text with only the markers', () => {
@@ -123,29 +123,29 @@ it('should reconstruct the basic structure of the text with only the markers', (
   const skeleton = plan.getSkeletonPlan();
   expect(skeleton).toBe('<1000>\n\n</>\n\n<1000>\n\n<2000>\n\n</>\n\n</>');
 
-  const plan2 = new WritingPlan("<1000>\n" +
-    "Two words\n" +
-    "<>\n" +
-    "Two Word.\n" +
-    "Four word.\n" +
-    "Six word.\n" +
-    "</>\n" +
-    "<>\n" +
-    "Two Word.\n" +
-    "Four word.\n" +
-    "Six word.\n" +
-    "Eight word.\n" +
-    "</>\n" +
-    "</>");
+  const plan2 = new WritingPlan('<1000>\n' +
+    'Two words\n' +
+    '<>\n' +
+    'Two Word.\n' +
+    'Four word.\n' +
+    'Six word.\n' +
+    '</>\n' +
+    '<>\n' +
+    'Two Word.\n' +
+    'Four word.\n' +
+    'Six word.\n' +
+    'Eight word.\n' +
+    '</>\n' +
+    '</>');
 
   const skeleton2 = plan2.getSkeletonPlan();
   expect(skeleton2).toBe('<1000>\n\n<>\n\n</>\n\n<>\n\n</>\n\n</>');
 
-})
+});
 
 
 it('should calculate correct total target', () => {
-  const text = "<300>One<200><300><50>Two</></><100></></><100></><50></><25></></><400>Three</>"
+  const text = '<300>One<200><300><50>Two</></><100></></><100></><50></><25></></><400>Three</>';
   const plan = new WritingPlan(text);
   expect(plan.sections[0].wordTargetActual).toBe(575);
   expect(plan.sections[0].wordTargetNominal).toBe(300);
@@ -164,4 +164,19 @@ it('should calculate correct total target', () => {
   expect(plan.sections[2].isSectionTargetOverflown).toBe(false);
   expect(plan.sections[3].isSectionTargetOverflown).toBe(false);
 
-})
+});
+
+it('writing plan should not panic when provided with empty text and only start to panic when there is an opening marker exists', () => {
+  const test = '';
+
+  expect(() => {
+    new WritingPlan(test);
+  }).toThrow();
+  const test_should_not_panic = '<1000>';
+  const plan2 = new WritingPlan(test_should_not_panic);
+  expect(plan2).toBeTruthy();
+  const test_should_panic = '<2000>\n<3000>\n</>';
+  const plan3 = new WritingPlan(test_should_panic);
+  expect(plan3).toBeTruthy();
+
+});

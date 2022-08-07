@@ -1,9 +1,10 @@
 import { WritingInfo } from './doc-info';
 import { isCloseMarker, isOpenMarker } from './entities/is-open-marker';
 import { WritingPlanOptions } from './entities/writing-plan-options';
-import { Section } from './section';
-import { generateSectionsFromText } from './section-tree';
 import { MarkerMatch } from './marker-match';
+import { getLinesFromText } from './reader';
+import { Section } from './section';
+import { extractMarkerTokens, generateSectionsFromText } from './section-tree';
 import { exportMarkdown } from './utils/output-markdown';
 
 export class WritingPlan {
@@ -24,6 +25,7 @@ export class WritingPlan {
     if (!text) {
       throw new Error('WritingPlan cannot be instantiated without text');
     }
+
     this.originalText = text;
     if (!options) {
       // use default options if none are provided
@@ -31,6 +33,13 @@ export class WritingPlan {
     }
     // set options
     this.options = options;
+
+    // check if the text has at least one valid section with open and close markers, if not throw error
+    if (!this.doesTextHaveAtLeastOneSection(this.originalText, this.options)) {
+      // use quite throw for now to avoid distrupting user experience.
+      return;
+      // throw new Error('WritingPlan cannot be instantiated without at least one section');
+    }
     // load info
     this.info = WritingInfo.fromPlainText(text, options);
     // if the text has no plan, do not go future and return the object as is;
@@ -254,6 +263,20 @@ export class WritingPlan {
   }
 
 
+  isLineWithinChildrenSection(section: Section, i: number) {
+    // get all children sections of the section
+    const childrenSections = this.getSectionChildren(section.id);
+    // check if the line is within any of the children sections markers' markeropenline and markercloseline ranges
+    return childrenSections.some(childSection => childSection.markerOpenLine <= i && childSection.markerCloseLine >= i);
+  }
+
+  doesTextHaveAtLeastOneSection(text: string, options: WritingPlanOptions): boolean {
+    const lines = getLinesFromText(text);
+    const tokens = extractMarkerTokens(lines, options);
+    const openMarker = tokens.filter(token => isOpenMarker(token.marker, options));
+    const hasCloseMarker = tokens.filter(token => isCloseMarker(token.marker, options));
+    return openMarker.length > 0 && hasCloseMarker.length > 0;
+  }
 }
 
 
