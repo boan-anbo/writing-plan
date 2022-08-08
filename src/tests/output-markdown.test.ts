@@ -1,4 +1,5 @@
 import WritingPlan from '../lib/writing-plan';
+import * as fs from 'fs';
 
 it('should export markdown', () => {
   const text = `<1000|Test Text>\n## Internal Markdown\n<40># FEFHUWEIOF</> \n efjiwopafj eiowapfj ewoia\n</>`;
@@ -65,3 +66,15 @@ it('should export markdown with multiple levels and not losing original informat
     '</>'
   ]);
 });
+
+it('should parse long markdown', () => {
+  // load ./src/test/test_assets/test-long-markdown.md
+  const originalMarkdown: string[] = fs.readFileSync('./src/tests/assets/long-markdown-to-parse.md', 'utf8').split('\n');
+  expect(originalMarkdown.length).toBeGreaterThan(100);
+  const originalLength = originalMarkdown.length;
+  const writingPlan = new WritingPlan(originalMarkdown.join('\n'));
+  const writingPlanOutputMarkdown = writingPlan.outPutMarkdown();
+  const parsedLength = writingPlanOutputMarkdown.split('\n').length;
+  expect(parsedLength).toEqual(originalLength);
+  expect(originalMarkdown.join('\n')).toEqual(writingPlanOutputMarkdown)
+})

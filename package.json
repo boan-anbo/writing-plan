@@ -1,6 +1,7 @@
 {
   "name": "writing-plan",
-  "version": "1.0.0",
+  "version": "0.5.0",
+  "author": "Bo An <boan-anbo@proton.me>",
   "description": "library for writing planning and tracking",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
